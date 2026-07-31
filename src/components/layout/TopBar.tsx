@@ -63,9 +63,9 @@ export default function TopBar() {
   return (
     <header className="h-20 shrink-0 sticky top-0 z-20 glass border-b border-border/40 px-4 sm:px-6 flex items-center justify-between gap-3">
       {/* Brand / Logo */}
-      <Link to="/" className="flex items-center gap-2 shrink-0">
+      <Link to="/" className="flex items-center gap-2.5 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/20">
-          <span className="font-display font-bold text-base text-white">N</span>
+          <span className="font-display font-bold text-base text-white">O</span>
         </div>
         <span className="font-display font-bold text-lg hidden sm:inline-block bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
           openAnime

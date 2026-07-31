@@ -21,10 +21,10 @@ export default function Sidebar({ className }: { className?: string }) {
       <div className="p-6 flex items-center justify-center md:justify-start lg:justify-start">
         <Link to="/" className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-            <span className="font-display font-bold text-xl tracking-tighter text-white">N</span>
+            <span className="font-display font-bold text-xl tracking-tighter text-white">O</span>
           </div>
           <span className="font-display font-bold text-xl tracking-wide hidden lg:block md:hidden">
-            Nekoflux
+            openAnime
           </span>
         </Link>
       </div>
