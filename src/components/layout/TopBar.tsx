@@ -1,14 +1,16 @@
-import { Search as SearchIcon, X } from "lucide-react";
+import { Search as SearchIcon, X, Download } from "lucide-react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useRecentSearches } from "../../hooks/useRecentSearches";
+import { usePWAInstall } from "../../hooks/usePWAInstall";
 
 export default function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { addSearch } = useRecentSearches();
+  const { isInstallable, promptInstall } = usePWAInstall();
 
   const urlQuery = searchParams.get("q") || "";
   const [input, setInput] = useState(urlQuery);
@@ -99,6 +101,20 @@ export default function TopBar() {
           )}
         </form>
       </div>
+
+      {/* Install PWA Button */}
+      {isInstallable && (
+        <button
+          onClick={promptInstall}
+          className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary text-xs sm:text-sm font-semibold transition-all active:scale-95 cursor-pointer shrink-0"
+          title="Install openAnime App"
+        >
+          <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">Install App</span>
+          <span className="sm:hidden">Install</span>
+        </button>
+      )}
     </header>
   );
 }
+
