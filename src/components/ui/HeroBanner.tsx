@@ -51,7 +51,7 @@ export default function HeroBanner({ anime }: HeroBannerProps) {
       {/* Background Image with Gradients */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
-          src={anime.coverImage || "https://images.unsplash.com/photo-1542451313056-b7c8e6266459?w=1600&h=900&fit=crop"}
+          src={anime.coverImage || "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&h=900&fit=crop"}
           alt={anime.title}
           className="w-full h-full object-cover transition-transform duration-700 ease-out lg:group-lg:hover:scale-105"
         />

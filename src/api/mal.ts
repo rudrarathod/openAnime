@@ -65,7 +65,15 @@ export function mapJikanToMal(item: any): MalAnime {
 async function safeFetchJson(url: string, retries = 2, delayMs = 350): Promise<any> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url);
+      const headers: Record<string, string> = {};
+      if (url.startsWith(BASE_URL) || url.startsWith("/api/mal") || url.includes("api.myanimelist.net")) {
+        headers["X-MAL-CLIENT-ID"] = "6114d00ca681b7701d1e15fe11a4987e";
+      }
+
+      const res = await fetch(url, {
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
+      });
+
       if (res.status === 429 && attempt < retries) {
         await new Promise((r) => setTimeout(r, (attempt + 1) * 800));
         continue;
@@ -97,6 +105,119 @@ async function safeFetchJson(url: string, retries = 2, delayMs = 350): Promise<a
   return null;
 }
 
+// Queue Jikan API calls to ensure max 1 request per 350ms to strictly comply with Jikan rate limits (3 req/sec)
+let jikanQueue: Promise<any> = Promise.resolve();
+async function queuedJikanFetch(url: string, retries = 2, delayMs = 500): Promise<any> {
+  const currentTask = jikanQueue.then(async () => {
+    await new Promise((r) => setTimeout(r, 350));
+    return safeFetchJson(url, retries, delayMs);
+  });
+  jikanQueue = currentTask.catch(() => {});
+  return currentTask;
+}
+
+export async function fetchAniListRanking(type: string, page = 1, perPage = 20): Promise<MalAnime[]> {
+  let sort = ["SCORE_DESC", "POPULARITY_DESC"];
+  let status: string | undefined = undefined;
+  let format: string | undefined = undefined;
+
+  switch (type) {
+    case "airing":
+      status = "RELEASING";
+      sort = ["POPULARITY_DESC", "SCORE_DESC"];
+      break;
+    case "bypopularity":
+      sort = ["POPULARITY_DESC"];
+      break;
+    case "upcoming":
+      status = "NOT_YET_RELEASED";
+      sort = ["POPULARITY_DESC"];
+      break;
+    case "favorite":
+      sort = ["FAVOURITES_DESC"];
+      break;
+    case "tv":
+      format = "TV";
+      sort = ["SCORE_DESC", "POPULARITY_DESC"];
+      break;
+    case "movie":
+      format = "MOVIE";
+      sort = ["SCORE_DESC", "POPULARITY_DESC"];
+      break;
+    case "ova":
+      format = "OVA";
+      sort = ["SCORE_DESC", "POPULARITY_DESC"];
+      break;
+    case "special":
+      format = "SPECIAL";
+      sort = ["SCORE_DESC", "POPULARITY_DESC"];
+      break;
+    case "all":
+    default:
+      sort = ["SCORE_DESC", "POPULARITY_DESC"];
+      break;
+  }
+
+  const query = `
+    query ($page: Int, $perPage: Int, $sort: [MediaSort], $status: MediaStatus, $format: MediaFormat) {
+      Page(page: $page, perPage: $perPage) {
+        media(type: ANIME, sort: $sort, status: $status, format: $format) {
+          id
+          idMal
+          title {
+            romaji
+            english
+            native
+          }
+          coverImage {
+            extraLarge
+            large
+            medium
+          }
+          meanScore
+          format
+          episodes
+          genres
+          status
+        }
+      }
+    }
+  `;
+
+  try {
+    const res = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ query, variables: { page, perPage, sort, status, format } }),
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const media = json?.data?.Page?.media;
+    if (!media || !Array.isArray(media)) return [];
+
+    return media.map((item: any) => ({
+      id: item.idMal || item.id,
+      title: item.title?.english || item.title?.romaji || item.title?.native || "",
+      main_picture: {
+        medium: item.coverImage?.medium || item.coverImage?.large || "",
+        large: item.coverImage?.extraLarge || item.coverImage?.large || item.coverImage?.medium || "",
+      },
+      alternative_titles: {
+        en: item.title?.english || "",
+        ja: item.title?.native || item.title?.romaji || "",
+      },
+      mean: item.meanScore ? Number((item.meanScore / 10).toFixed(2)) : undefined,
+      num_episodes: item.episodes || undefined,
+      genres: item.genres?.map((g: string, idx: number) => ({ id: idx + 1, name: g })) || [],
+      media_type: item.format ? item.format.toLowerCase() : "tv",
+      status: item.status || "",
+    }));
+  } catch (err) {
+    console.error("AniList ranking fetch error:", err);
+    return [];
+  }
+}
+
 async function fetchJikanRanking(type: string, limit = 20, offset = 0): Promise<MalAnime[]> {
   try {
     const page = Math.floor(offset / 25) + 1;
@@ -108,10 +229,10 @@ async function fetchJikanRanking(type: string, limit = 20, offset = 0): Promise<
       url += `&type=${type}`;
     }
 
-    let json = await safeFetchJson(url, 2, 500);
+    let json = await queuedJikanFetch(url, 2, 500);
     // Secondary fallback: if page > 1 or specific filter failed, retry top anime page 1
     if ((!json?.data || !Array.isArray(json.data) || json.data.length === 0) && page > 1) {
-      json = await safeFetchJson(`https://api.jikan.moe/v4/top/anime?page=1&limit=25&sfw=false`, 2, 500);
+      json = await queuedJikanFetch(`https://api.jikan.moe/v4/top/anime?page=1&limit=25&sfw=false`, 2, 500);
     }
 
     if (!json?.data || !Array.isArray(json.data)) return [];
@@ -127,14 +248,20 @@ export async function fetchMalRanking(type: string, limit = 20, offset = 0): Pro
   if (offset >= 1000) return [];
   const key = `v4_mal_ranking_${type}_${limit}_${offset}`;
   return cachedFetch(key, async () => {
-    // Attempt safe fetch from MAL proxy
+    // 1. Attempt safe fetch from MAL proxy
     const malUrl = `${BASE_URL}/anime/ranking?ranking_type=${type}&limit=${limit}&offset=${offset}&nsfw=true&fields=id,title,main_picture,alternative_titles,mean,media_type,num_episodes,genres,status,rating`;
     const malJson = await safeFetchJson(malUrl);
-    if (malJson?.data && Array.isArray(malJson.data)) {
+    if (malJson?.data && Array.isArray(malJson.data) && malJson.data.length > 0) {
       return malJson.data.map((item: any) => item.node);
     }
 
-    // Direct fallback to Jikan API
+    // 2. Fallback to AniList GraphQL (Fast, high quality)
+    const aniListResults = await fetchAniListRanking(type, Math.floor(offset / limit) + 1, limit);
+    if (aniListResults && aniListResults.length > 0) {
+      return aniListResults;
+    }
+
+    // 3. Fallback to Jikan API (queued & throttled)
     return await fetchJikanRanking(type, limit, offset);
   }, 30 * 60 * 1000); // 30 min cache
 }

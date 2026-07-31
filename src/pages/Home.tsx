@@ -25,37 +25,64 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadData() {
       setLoading(true);
-      
-      const formatAnime = (items: MalAnime[]) => items.map(item => {
-        const titles = getFormattedAnimeTitles(item);
-        return {
-          id: item.id.toString(),
-          title: titles.title,
-          subtitle: titles.subtitle,
-          image: item.main_picture?.large || item.main_picture?.medium,
-          score: item.mean || "N/A",
-          type: item.media_type?.toUpperCase() || "TV",
-          rating: item.rating,
-          genres: item.genres?.map((g: any) => typeof g === "string" ? g : g.name) || [],
-        };
-      });
 
-      // Fetch all ranking categories concurrently
-      const results = await Promise.all(
-        RANKING_CATEGORIES.map(cat => fetchMalRanking(cat.type, 15))
+      const formatAnime = (items: MalAnime[]) =>
+        items.map((item) => {
+          const titles = getFormattedAnimeTitles(item);
+          return {
+            id: item.id.toString(),
+            title: titles.title,
+            subtitle: titles.subtitle,
+            image: item.main_picture?.large || item.main_picture?.medium,
+            score: item.mean || "N/A",
+            type: item.media_type?.toUpperCase() || "TV",
+            rating: item.rating,
+            genres: item.genres?.map((g: any) => (typeof g === "string" ? g : g.name)) || [],
+          };
+        });
+
+      // Priority batch (Airing & Popularity) to render HeroBanner & top carousels instantly
+      const priorityCats = RANKING_CATEGORIES.slice(0, 3);
+      const remainingCats = RANKING_CATEGORIES.slice(3);
+
+      const priorityResults = await Promise.all(
+        priorityCats.map((cat) => fetchMalRanking(cat.type, 15))
       );
 
-      const newRankings: Record<string, AnimeProp[]> = {};
-      RANKING_CATEGORIES.forEach((cat, index) => {
-        newRankings[cat.id] = formatAnime(results[index]);
+      if (!isMounted) return;
+
+      const initialRankings: Record<string, AnimeProp[]> = {};
+      priorityCats.forEach((cat, index) => {
+        initialRankings[cat.id] = formatAnime(priorityResults[index]);
       });
 
-      setRankings(newRankings);
+      setRankings(initialRankings);
       setLoading(false);
+
+      // Load remaining categories in background
+      const remainingResults = await Promise.all(
+        remainingCats.map((cat) => fetchMalRanking(cat.type, 15))
+      );
+
+      if (!isMounted) return;
+
+      const fullRankings: Record<string, AnimeProp[]> = { ...initialRankings };
+      remainingCats.forEach((cat, index) => {
+        fullRankings[cat.id] = formatAnime(remainingResults[index]);
+      });
+
+      setRankings(fullRankings);
     }
+
     loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const candidatePool = useMemo(() => {
@@ -63,12 +90,14 @@ export default function Home() {
   }, [rankings]);
 
   const heroItems = rankings["airing"] || rankings["bypopularity"] || [];
+  const DEFAULT_BANNER = "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&h=900&fit=crop";
+
   const heroData = heroItems.length > 0 ? {
     id: heroItems[0].id.toString(),
     title: heroItems[0].title,
     subtitle: heroItems[0].subtitle,
     description: "Check out the most popular series streaming right now!", 
-    coverImage: heroItems[0].image || "https://images.unsplash.com/photo-1542451313056-b7c8e6266459?w=1600&h=900&fit=crop",
+    coverImage: heroItems[0].image || DEFAULT_BANNER,
     genres: ["Trending", "Popular"],
     rating: heroItems[0].score?.toString() || "N/A",
     year: new Date().getFullYear().toString()
@@ -76,7 +105,7 @@ export default function Home() {
     id: "1",
     title: "Loading...",
     description: "Please wait...",
-    coverImage: "https://images.unsplash.com/photo-1542451313056-b7c8e6266459?w=1600&h=900&fit=crop",
+    coverImage: DEFAULT_BANNER,
     genres: [],
     rating: "",
     year: ""
