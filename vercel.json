@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/mal/:path*",
+      "destination": "https://api.myanimelist.net/v2/:path*"
+    },
+    {
+      "source": "/api/anikoto/:path*",
+      "destination": "https://anikotoapi.site/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/mal/(.*)",
+      "headers": [
+        {
+          "key": "X-MAL-CLIENT-ID",
+          "value": "6114d00ca681b7701d1e15fe11a4987e"
+        },
+        {
+          "key": "User-Agent",
+          "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      ]
+    }
+  ]
+}
