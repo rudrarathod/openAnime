@@ -63,7 +63,7 @@ export default function Carousel({ title, subtitle, items, layout = "portrait", 
         </div>
       </div>
 
-      <div className="relative group">
+      <div className="relative group overflow-hidden">
         <div 
           ref={scrollRef}
           onScroll={handleScroll}

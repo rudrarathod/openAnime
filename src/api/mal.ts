@@ -204,7 +204,7 @@ export async function fetchAniListRanking(type: string, page = 1, perPage = 20):
       },
       alternative_titles: {
         en: item.title?.english || "",
-        ja: item.title?.native || item.title?.romaji || "",
+        ja: item.title?.romaji || item.title?.native || "",
       },
       mean: item.meanScore ? Number((item.meanScore / 10).toFixed(2)) : undefined,
       num_episodes: item.episodes || undefined,
@@ -290,7 +290,7 @@ export async function fetchAniListSearch(queryStr: string, page = 1, perPage = 2
       },
       alternative_titles: {
         en: item.title?.english || "",
-        ja: item.title?.native || item.title?.romaji || "",
+        ja: item.title?.romaji || item.title?.native || "",
       },
       mean: item.meanScore ? Number((item.meanScore / 10).toFixed(2)) : undefined,
       num_episodes: item.episodes || undefined,
@@ -374,7 +374,7 @@ export async function fetchAniListDetails(id: string | number): Promise<MalAnime
       },
       alternative_titles: {
         en: item.title?.english || "",
-        ja: item.title?.native || item.title?.romaji || "",
+        ja: item.title?.romaji || item.title?.native || "",
       },
       synopsis: item.description?.replace(/<[^>]*>?/gm, "") || "",
       mean: item.meanScore ? Number((item.meanScore / 10).toFixed(2)) : (item.averageScore ? Number((item.averageScore / 10).toFixed(2)) : undefined),
@@ -394,7 +394,7 @@ export async function fetchAniListDetails(id: string | number): Promise<MalAnime
 
 export async function fetchMalRanking(type: string, limit = 20, offset = 0): Promise<MalAnime[]> {
   if (offset >= 1000) return [];
-  const key = `v5_mal_ranking_${type}_${limit}_${offset}`;
+  const key = `v6_mal_ranking_${type}_${limit}_${offset}`;
   return cachedFetch(key, async () => {
     // 1. Primary: AniList GraphQL (Fast, reliable, keyless, zero CORS/403 issues)
     const aniListResults = await fetchAniListRanking(type, Math.floor(offset / limit) + 1, limit);
@@ -553,7 +553,7 @@ export async function fetchAniListByGenre(genreName: string, page = 1, perPage =
       },
       alternative_titles: {
         en: item.title?.english || "",
-        ja: item.title?.native || item.title?.romaji || "",
+        ja: item.title?.romaji || item.title?.native || "",
       },
       mean: item.meanScore ? Number((item.meanScore / 10).toFixed(2)) : undefined,
       num_episodes: item.episodes || undefined,
