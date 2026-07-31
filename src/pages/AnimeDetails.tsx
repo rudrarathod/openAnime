@@ -442,7 +442,7 @@ export default function AnimeDetails() {
           {episodesLoading && episodes.length === 0 ? (
             <EpisodeGridSkeleton count={8} />
           ) : episodes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {(episodes.length > 100
                 ? episodes.filter((ep) => ep.number >= selectedChunk * 100 + 1 && ep.number <= (selectedChunk + 1) * 100)
                 : episodes
@@ -457,30 +457,29 @@ export default function AnimeDetails() {
                   <div
                     key={ep.id}
                     className={cn(
-                      "group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl glass-panel border transition-all active:bg-secondary/40 touch-manipulation",
+                      "group flex items-center justify-between gap-3 p-3 rounded-xl glass border transition-all active:bg-secondary/40 touch-manipulation",
                       isWatched
                         ? "border-primary/30 bg-primary/5 hover:border-primary/50"
-                        : "border-white/5 hover:border-primary/40 glass hover:bg-secondary/50"
+                        : "border-transparent hover:border-border/60 hover:bg-secondary/50"
                     )}
                   >
                     <Link
                       to={`/watch/${anime.id}/${ep.number}`}
                       state={{ streamType: defaultStreamType }}
-                      className="flex items-start sm:items-center gap-3 min-w-0 flex-1"
+                      className="flex items-center gap-3 min-w-0 flex-1"
                     >
-                      <div className="relative w-24 sm:w-28 aspect-video rounded-xl overflow-hidden shrink-0 bg-secondary flex items-center justify-center shadow-md">
+                      <div className="relative w-28 aspect-video rounded-lg overflow-hidden shrink-0 bg-secondary flex items-center justify-center">
                         <img
                           src={anime.main_picture?.large || anime.main_picture?.medium}
                           alt={`Episode ${ep.number}`}
                           className={cn(
-                            "w-full h-full object-cover blur-sm transition-transform duration-300 group-hover:scale-105",
+                            "w-full h-full object-cover blur-sm transition-transform lg:group-hover:scale-105",
                             isWatched ? "opacity-75" : "opacity-50"
                           )}
-                          loading="lazy"
                         />
-                        <span className="absolute font-bold text-white text-xs sm:text-sm z-10 shadow-sm">EP {ep.number}</span>
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                          <Play className="w-5 h-5 text-white opacity-80 group-hover:opacity-100 transition-opacity fill-current z-10" />
+                        <span className="absolute font-bold text-white text-sm z-10">EP {ep.number}</span>
+                        <div className="absolute inset-0 bg-black/20 lg:group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <Play className="w-5 h-5 text-white opacity-80 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity fill-current z-10" />
                         </div>
 
                         {/* Visual Progress Bar at bottom of thumbnail */}
@@ -500,22 +499,22 @@ export default function AnimeDetails() {
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={cn("text-xs font-bold", isWatched ? "text-primary" : "text-muted-foreground")}>
+                          <span className={cn("text-xs font-semibold", isWatched ? "text-primary" : "text-muted-foreground")}>
                             Episode {ep.number}
                           </span>
                           {ep.filler && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase">Filler</span>}
                           {ep.recap && <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold uppercase">Recap</span>}
                         </div>
-                        <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 mt-1 group-hover:text-primary transition-colors leading-snug" title={ep.title}>
+                        <h3 className="text-sm font-medium line-clamp-2 mt-0.5 lg:group-hover:text-primary transition-colors" title={ep.title}>
                           {ep.title}
                         </h3>
                       </div>
                     </Link>
 
-                    {/* Explicit SUB and DUB buttons & Mark Watched toggle */}
-                    <div className="flex items-center justify-end gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/30">
+                    {/* Explicit SUB and DUB buttons (only rendered if available) & Mark Watched toggle */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -525,14 +524,13 @@ export default function AnimeDetails() {
                         }}
                         title={isWatched ? "Mark as unwatched" : "Mark as watched"}
                         className={cn(
-                          "px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-xs font-semibold transition-all border touch-manipulation min-h-[34px]",
+                          "w-8 h-8 rounded-lg flex items-center justify-center transition-all border touch-manipulation min-h-[36px] min-w-[36px]",
                           isWatched
                             ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
                             : "bg-secondary/60 text-muted-foreground border-border/40 hover:text-foreground hover:bg-secondary"
                         )}
                       >
-                        <Check className={cn("w-3.5 h-3.5", isWatched ? "stroke-[3]" : "opacity-60")} />
-                        <span className="text-[11px] font-medium hidden sm:inline">{isWatched ? "Watched" : "Mark"}</span>
+                        <Check className={cn("w-4 h-4", isWatched ? "stroke-[3]" : "opacity-60")} />
                       </button>
 
                       {epHasSub && (
@@ -540,7 +538,7 @@ export default function AnimeDetails() {
                           to={`/watch/${anime.id}/${ep.number}`}
                           state={{ streamType: "sub" }}
                           title={`Play Episode ${ep.number} SUB`}
-                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[34px] flex items-center justify-center"
+                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[36px] flex items-center justify-center"
                         >
                           SUB
                         </Link>
@@ -550,7 +548,7 @@ export default function AnimeDetails() {
                           to={`/watch/${anime.id}/${ep.number}`}
                           state={{ streamType: "dub" }}
                           title={`Play Episode ${ep.number} DUB`}
-                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[34px] flex items-center justify-center"
+                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[36px] flex items-center justify-center"
                         >
                           DUB
                         </Link>

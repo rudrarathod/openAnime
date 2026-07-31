@@ -271,26 +271,25 @@ export default function VideoPlayer() {
                 key={ep.id}
                 onClick={() => handlePlayEpisode(ep.number, epHasSub ? (streamType === "dub" && epHasDub ? "dub" : "sub") : "dub")}
                 className={cn(
-                  "flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-2xl transition-all border cursor-pointer group",
+                  "flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl transition-all border cursor-pointer group",
                   isActive
-                    ? "bg-primary/10 border-primary shadow-sm ring-1 ring-primary/30"
+                    ? "bg-primary/10 border-primary shadow-sm"
                     : isWatched
                     ? "glass border-primary/20 bg-primary/5 hover:border-primary/40"
                     : "glass border-transparent hover:border-border/60 hover:bg-secondary/50"
                 )}
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="relative w-20 sm:w-24 aspect-video rounded-xl overflow-hidden shrink-0 bg-secondary flex items-center justify-center shadow-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-20 sm:w-24 aspect-video rounded-lg overflow-hidden shrink-0 bg-secondary flex items-center justify-center">
                     <img
                       src={data?.main_picture?.large || data?.main_picture?.medium}
                       alt={`EP ${ep.number}`}
                       className={cn(
-                        "w-full h-full object-cover blur-sm transition-opacity duration-300",
+                        "w-full h-full object-cover blur-sm transition-opacity",
                         isActive ? "opacity-75" : isWatched ? "opacity-65" : "opacity-40 grayscale"
                       )}
-                      loading="lazy"
                     />
-                    <span className="absolute font-bold text-white text-xs sm:text-sm z-10 shadow-sm">EP {ep.number}</span>
+                    <span className="absolute font-bold text-white text-xs sm:text-sm z-10">EP {ep.number}</span>
                     {isActive ? (
                       <div className="absolute inset-0 bg-primary/30 flex items-center justify-center z-10">
                         <Play className="w-5 h-5 text-white fill-current" />
@@ -311,28 +310,28 @@ export default function VideoPlayer() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={cn("text-xs font-bold", isActive ? "text-primary" : isWatched ? "text-primary/90" : "text-muted-foreground")}>
+                      <span className={cn("text-xs font-semibold", isActive ? "text-primary font-bold" : isWatched ? "text-primary/90" : "text-muted-foreground")}>
                         Episode {ep.number}
                       </span>
                       {ep.filler && <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase">Filler</span>}
                       {ep.recap && <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold uppercase">Recap</span>}
                     </div>
-                    <h3 className={cn("text-xs sm:text-sm font-semibold line-clamp-2 mt-0.5 leading-snug", isActive ? "text-foreground font-bold" : "text-foreground/80")} title={ep.title}>
+                    <h3 className={cn("text-xs sm:text-sm font-medium line-clamp-2 mt-0.5", isActive ? "text-foreground font-semibold" : "text-foreground/80")} title={ep.title}>
                       {ep.title}
                     </h3>
                   </div>
                 </div>
 
-                {/* Explicit SUB / DUB buttons for each episode */}
-                <div className="flex items-center justify-end gap-1.5 shrink-0 self-end xs:self-center pt-1 xs:pt-0" onClick={(e) => e.stopPropagation()}>
+                {/* Explicit SUB / DUB buttons for each episode (only rendered if available) */}
+                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                   {epHasSub && (
                     <button
                       onClick={(e) => handlePlayEpisode(ep.number, "sub", e)}
                       title={`Play Episode ${ep.number} SUB`}
                       className={cn(
-                        "px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-extrabold uppercase transition-all border min-h-[30px] sm:min-h-[34px] flex items-center justify-center active:scale-95 touch-manipulation",
+                        "px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all border min-h-[36px] flex items-center justify-center active:scale-95 touch-manipulation",
                         isActive && streamType === "sub"
                           ? "bg-primary text-white border-primary shadow-md shadow-primary/30"
                           : "bg-secondary/80 hover:bg-primary/20 hover:text-primary active:bg-primary/30 border-border/50 text-muted-foreground"
@@ -346,7 +345,7 @@ export default function VideoPlayer() {
                       onClick={(e) => handlePlayEpisode(ep.number, "dub", e)}
                       title={`Play Episode ${ep.number} DUB`}
                       className={cn(
-                        "px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-extrabold uppercase transition-all border min-h-[30px] sm:min-h-[34px] flex items-center justify-center active:scale-95 touch-manipulation",
+                        "px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase transition-all border min-h-[36px] flex items-center justify-center active:scale-95 touch-manipulation",
                         isActive && streamType === "dub"
                           ? "bg-primary text-white border-primary shadow-md shadow-primary/30"
                           : "bg-secondary/80 hover:bg-primary/20 hover:text-primary active:bg-primary/30 border-border/50 text-muted-foreground"
