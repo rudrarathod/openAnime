@@ -63,7 +63,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="h-20 shrink-0 sticky top-0 z-20 glass border-b border-border/40 px-4 sm:px-6 flex items-center justify-between gap-3">
+    <header className="h-16 sm:h-20 shrink-0 sticky top-0 z-40 bg-[#0c0c0e]/95 backdrop-blur-2xl border-b border-white/10 shadow-lg shadow-black/50 px-4 sm:px-6 flex items-center justify-between gap-3 transition-all">
       {/* Brand / Logo */}
       <Link to="/" className="flex items-center gap-2.5 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/20">
