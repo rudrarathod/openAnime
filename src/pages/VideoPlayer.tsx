@@ -374,7 +374,7 @@ export default function VideoPlayer() {
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
         {/* Top bar */}
-        <div className="flex-shrink-0 h-16 flex items-center justify-between px-4 gap-4 bg-background/80 backdrop-blur border-b border-border/40 sticky top-0 z-20">
+        <div className="flex-shrink-0 h-16 flex items-center justify-between px-4 gap-4 bg-background/95 backdrop-blur border-b border-border/40 z-20">
           <div className="flex items-center gap-3 min-w-0">
             <button 
               onClick={() => navigate(-1)}
@@ -430,7 +430,7 @@ export default function VideoPlayer() {
         {/* Scrollable Content (Mobile: Details + Episodes, Desktop: Details) */}
         <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
           {/* Player Container */}
-          <div className="w-full aspect-video bg-black flex-shrink-0 sticky top-0 z-10 border-b border-border/40 shadow-2xl relative">
+          <div className="w-full aspect-video bg-black shrink-0 relative overflow-hidden border-b border-border/40 shadow-2xl z-10">
             <iframe 
               key={`${epId}-${streamType}`} // Forces iframe reload when episode or audio type changes
               src={getEmbedUrl()} 
