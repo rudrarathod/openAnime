@@ -312,7 +312,7 @@ export default function VideoPlayer() {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className={cn("text-xs font-semibold", isActive ? "text-primary font-bold" : isWatched ? "text-primary/90" : "text-muted-foreground")}>
+                      <span className={cn("text-xs font-semibold whitespace-nowrap", isActive ? "text-primary font-bold" : isWatched ? "text-primary/90" : "text-muted-foreground")}>
                         Episode {ep.number}
                       </span>
                       {ep.filler && <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase">Filler</span>}

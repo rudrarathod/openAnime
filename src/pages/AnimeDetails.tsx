@@ -442,7 +442,7 @@ export default function AnimeDetails() {
           {episodesLoading && episodes.length === 0 ? (
             <EpisodeGridSkeleton count={8} />
           ) : episodes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {(episodes.length > 100
                 ? episodes.filter((ep) => ep.number >= selectedChunk * 100 + 1 && ep.number <= (selectedChunk + 1) * 100)
                 : episodes
@@ -457,64 +457,62 @@ export default function AnimeDetails() {
                   <div
                     key={ep.id}
                     className={cn(
-                      "group flex items-center justify-between gap-3 p-3 rounded-xl glass border transition-all active:bg-secondary/40 touch-manipulation",
+                      "group flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl glass border transition-all active:scale-[0.99] touch-manipulation min-w-0 min-h-[52px]",
                       isWatched
                         ? "border-primary/30 bg-primary/5 hover:border-primary/50"
-                        : "border-transparent hover:border-border/60 hover:bg-secondary/50"
+                        : "border-white/5 hover:border-white/20 hover:bg-secondary/40"
                     )}
                   >
+                    {/* Left: Thumbnail & Episode Info */}
                     <Link
                       to={`/watch/${anime.id}/${ep.number}`}
                       state={{ streamType: defaultStreamType }}
-                      className="flex items-center gap-3 min-w-0 flex-1"
+                      className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden"
                     >
-                      <div className="relative w-28 aspect-video rounded-lg overflow-hidden shrink-0 bg-secondary flex items-center justify-center">
+                      <div className="relative w-16 sm:w-20 aspect-video rounded-lg overflow-hidden shrink-0 bg-secondary flex items-center justify-center shadow-sm">
                         <img
                           src={anime.main_picture?.large || anime.main_picture?.medium}
-                          alt={`Episode ${ep.number}`}
+                          alt={`EP ${ep.number}`}
                           className={cn(
-                            "w-full h-full object-cover blur-sm transition-transform lg:group-hover:scale-105",
+                            "w-full h-full object-cover blur-[1px] group-hover:scale-105 transition-transform duration-300",
                             isWatched ? "opacity-75" : "opacity-50"
                           )}
+                          loading="lazy"
                         />
-                        <span className="absolute font-bold text-white text-sm z-10">EP {ep.number}</span>
-                        <div className="absolute inset-0 bg-black/20 lg:group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                          <Play className="w-5 h-5 text-white opacity-80 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity fill-current z-10" />
+                        <span className="absolute font-display font-extrabold text-white text-[11px] sm:text-xs z-10 drop-shadow">
+                          EP {ep.number}
+                        </span>
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <Play className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity fill-current z-10" />
                         </div>
 
-                        {/* Visual Progress Bar at bottom of thumbnail */}
+                        {/* Progress Bar */}
                         {(isWatched || progress > 0) && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/70 z-20 overflow-hidden">
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/80 z-10 overflow-hidden">
                             <div
-                              className="h-full bg-primary transition-all duration-300 shadow-sm"
+                              className="h-full bg-primary transition-all duration-300"
                               style={{ width: `${progress > 0 ? progress : 100}%` }}
                             />
                           </div>
                         )}
-
-                        {/* Top-Right Watched Check Badge */}
-                        {isWatched && (
-                          <div className="absolute top-1 right-1 bg-emerald-500 text-white rounded-full p-0.5 shadow-md z-20" title="Watched">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                          </div>
-                        )}
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={cn("text-xs font-semibold", isWatched ? "text-primary" : "text-muted-foreground")}>
-                            Episode {ep.number}
+
+                      <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className={cn("text-xs font-bold shrink-0", isWatched ? "text-primary font-bold" : "text-foreground")}>
+                            EP {ep.number}
                           </span>
-                          {ep.filler && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase">Filler</span>}
-                          {ep.recap && <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold uppercase">Recap</span>}
+                          {ep.filler && <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase shrink-0">Filler</span>}
+                          {ep.recap && <span className="px-1 py-0.2 rounded bg-purple-500/20 text-purple-400 text-[9px] font-extrabold uppercase shrink-0">Recap</span>}
                         </div>
-                        <h3 className="text-sm font-medium line-clamp-2 mt-0.5 lg:group-hover:text-primary transition-colors" title={ep.title}>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5 group-hover:text-primary transition-colors" title={ep.title}>
                           {ep.title}
-                        </h3>
+                        </p>
                       </div>
                     </Link>
 
-                    {/* Explicit SUB and DUB buttons (only rendered if available) & Mark Watched toggle */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -524,13 +522,13 @@ export default function AnimeDetails() {
                         }}
                         title={isWatched ? "Mark as unwatched" : "Mark as watched"}
                         className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center transition-all border touch-manipulation min-h-[36px] min-w-[36px]",
+                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all border touch-manipulation shrink-0",
                           isWatched
                             ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
                             : "bg-secondary/60 text-muted-foreground border-border/40 hover:text-foreground hover:bg-secondary"
                         )}
                       >
-                        <Check className={cn("w-4 h-4", isWatched ? "stroke-[3]" : "opacity-60")} />
+                        <Check className={cn("w-3.5 h-3.5", isWatched ? "stroke-[3]" : "opacity-60")} />
                       </button>
 
                       {epHasSub && (
@@ -538,7 +536,7 @@ export default function AnimeDetails() {
                           to={`/watch/${anime.id}/${ep.number}`}
                           state={{ streamType: "sub" }}
                           title={`Play Episode ${ep.number} SUB`}
-                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[36px] flex items-center justify-center"
+                          className="px-2 py-1 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[28px] shrink-0"
                         >
                           SUB
                         </Link>
@@ -548,7 +546,7 @@ export default function AnimeDetails() {
                           to={`/watch/${anime.id}/${ep.number}`}
                           state={{ streamType: "dub" }}
                           title={`Play Episode ${ep.number} DUB`}
-                          className="px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 hover:text-white border border-border/50 text-muted-foreground text-[11px] font-extrabold uppercase transition-all touch-manipulation min-h-[36px] flex items-center justify-center"
+                          className="px-2 py-1 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[28px] shrink-0"
                         >
                           DUB
                         </Link>
@@ -566,6 +564,161 @@ export default function AnimeDetails() {
             </div>
           )}
         </section>
+
+        {/* Franchise Watch Order & Related Shows */}
+        {(() => {
+          if (!anime) return null;
+          const rels = anime.relations ? [...anime.relations] : [];
+          if (rels.length === 0) return null;
+
+          const currentIdStr = String(anime.id);
+          const isCurrentInRels = rels.some((r) => String(r.id) === currentIdStr);
+
+          if (!isCurrentInRels) {
+            const formattedTitles = getFormattedAnimeTitles(anime);
+            rels.push({
+              id: anime.id,
+              title: formattedTitles.title,
+              subtitle: formattedTitles.subtitle,
+              image: anime.main_picture?.large || anime.main_picture?.medium || "",
+              score: anime.mean ? Number(anime.mean.toFixed(1)) : undefined,
+              type: anime.media_type,
+              relationType: "CURRENT",
+              relationLabel: "Current Entry",
+              year: anime.start_season?.year || new Date().getFullYear(),
+            });
+          }
+
+          // Sort chronologically by release timestamp / year
+          rels.sort((a, b) => {
+            const timeA = a.releaseTimestamp || (a.year || 9999) * 10000;
+            const timeB = b.releaseTimestamp || (b.year || 9999) * 10000;
+            if (timeA !== timeB) return timeA - timeB;
+            return a.id - b.id;
+          });
+
+          return (
+            <section className="border-t border-border/40 pt-10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-display font-bold">Franchise & Watch Order</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-xs font-bold">
+                    {rels.length} Part{rels.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Ordered chronologically by release date
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
+                {rels.map((rel, idx) => {
+                  const isCurrent = String(rel.id) === currentIdStr;
+                  const orderNum = idx + 1;
+
+                  const badgeStyle = isCurrent
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
+                    : (() => {
+                        switch (rel.relationType) {
+                          case "PREQUEL":
+                            return "bg-sky-500/25 text-sky-300 border-sky-500/40";
+                          case "SEQUEL":
+                            return "bg-emerald-500/25 text-emerald-300 border-emerald-500/40";
+                          case "PARENT":
+                            return "bg-primary/25 text-primary-foreground border-primary/40";
+                          case "SIDE_STORY":
+                            return "bg-purple-500/25 text-purple-300 border-purple-500/40";
+                          case "SUMMARY":
+                            return "bg-amber-500/25 text-amber-300 border-amber-500/40";
+                          case "ALTERNATIVE":
+                            return "bg-indigo-500/25 text-indigo-300 border-indigo-500/40";
+                          default:
+                            return "bg-black/70 text-white/90 border-white/20";
+                        }
+                      })();
+
+                  return (
+                    <Link
+                      key={`${rel.relationType}-${rel.id}`}
+                      to={`/anime/${rel.id}`}
+                      className={cn(
+                        "group relative flex flex-col gap-2.5 rounded-xl transition-all touch-manipulation cursor-pointer",
+                        isCurrent ? "scale-[1.02]" : "active:scale-95"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "relative aspect-[2/3] rounded-xl overflow-hidden bg-secondary shadow-lg border transition-all",
+                          isCurrent
+                            ? "border-primary ring-2 ring-primary/40 shadow-primary/20"
+                            : "border-white/5 group-hover:border-primary/40"
+                        )}
+                      >
+                        <img
+                          src={rel.image || anime.main_picture?.large || anime.main_picture?.medium}
+                          alt={rel.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+
+                        {/* Top Left Order Index & Relation Badge */}
+                        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+                          <span className="w-5 h-5 rounded-md bg-black/80 backdrop-blur-md text-white text-[10px] font-extrabold flex items-center justify-center border border-white/20 shadow-md">
+                            #{orderNum}
+                          </span>
+                          <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border shadow-md backdrop-blur-md", badgeStyle)}>
+                            {isCurrent ? "Viewing Now" : rel.relationLabel}
+                          </span>
+                        </div>
+
+                        {/* Top Right Rating Badge */}
+                        {rel.score && (
+                          <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-amber-400 text-[10px] font-bold border border-white/10 shadow-sm">
+                            <Star className="w-3 h-3 fill-current" />
+                            <span>{rel.score}</span>
+                          </div>
+                        )}
+
+                        {/* Bottom Media Type & Year Badges */}
+                        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 flex-wrap z-10">
+                          <span className="px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                            {rel.type ? rel.type.toUpperCase() : "TV"}
+                          </span>
+                          {rel.year && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-black/75 text-white/90 text-[10px] font-semibold backdrop-blur-md border border-white/10 shadow-sm">
+                              {rel.year}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Play overlay on hover */}
+                        {!isCurrent && (
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center backdrop-blur-md shadow-xl">
+                              <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="px-0.5 min-w-0">
+                        <h3 className={cn("font-semibold text-xs sm:text-sm line-clamp-1 transition-colors leading-snug", isCurrent ? "text-primary font-bold" : "group-hover:text-primary")}>
+                          {rel.title}
+                        </h3>
+                        {rel.subtitle && (
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 font-normal mt-0.5">
+                            {rel.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
       </div>
     </div>
   );

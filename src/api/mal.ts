@@ -2,6 +2,19 @@ import { cachedFetch } from "../utils/apiCache";
 
 const BASE_URL = "/api/mal";
 
+export interface RelatedAnimeItem {
+  id: number;
+  title: string;
+  subtitle?: string;
+  image: string;
+  score?: number | string;
+  type?: string;
+  relationType: string;
+  relationLabel: string;
+  year?: number;
+  releaseTimestamp?: number;
+}
+
 export interface MalAnime {
   id: number;
   title: string;
@@ -28,6 +41,7 @@ export interface MalAnime {
   rank?: number;
   popularity?: number;
   rating?: string;
+  relations?: RelatedAnimeItem[];
 }
 
 export function mapJikanToMal(item: any): MalAnime {
@@ -35,6 +49,39 @@ export function mapJikanToMal(item: any): MalAnime {
   const englishTitle = item.title_english || item.titles?.find((t: any) => t.type === "English")?.title;
   const japaneseTitle = item.title_japanese || item.titles?.find((t: any) => t.type === "Japanese")?.title;
   const synonyms = item.titles?.filter((t: any) => t.type === "Synonym")?.map((t: any) => t.title) || [];
+
+  let mappedRelations: RelatedAnimeItem[] = [];
+  if (item.relations && Array.isArray(item.relations)) {
+    for (const relGroup of item.relations) {
+      const relType = (relGroup.relation || "").toUpperCase();
+      let relationLabel = "Related";
+      switch (relType) {
+        case "PREQUEL": relationLabel = "Prequel"; break;
+        case "SEQUEL": relationLabel = "Sequel"; break;
+        case "PARENT STORY":
+        case "PARENT": relationLabel = "Main Series"; break;
+        case "SIDE STORY": relationLabel = "Side Story"; break;
+        case "SPIN-OFF": relationLabel = "Spin-Off"; break;
+        case "ALTERNATIVE VERSION":
+        case "ALTERNATIVE": relationLabel = "Alt. Version"; break;
+        case "SUMMARY": relationLabel = "Movie Summary"; break;
+        default: relationLabel = "Related"; break;
+      }
+      if (Array.isArray(relGroup.entry)) {
+        for (const entry of relGroup.entry) {
+          if (entry.type === "anime" && entry.mal_id) {
+            mappedRelations.push({
+              id: entry.mal_id,
+              title: entry.name || "",
+              image: "",
+              relationType: relType.replace(/\s+/g, "_"),
+              relationLabel,
+            });
+          }
+        }
+      }
+    }
+  }
 
   return {
     id: item.mal_id,
@@ -59,6 +106,7 @@ export function mapJikanToMal(item: any): MalAnime {
     rank: item.rank || undefined,
     popularity: item.popularity || undefined,
     rating: item.rating || undefined,
+    relations: mappedRelations.length > 0 ? mappedRelations : undefined,
   };
 }
 
@@ -309,9 +357,9 @@ export async function fetchAniListDetails(id: string | number): Promise<MalAnime
   if (!isNumeric) return null;
   const numId = Number(id);
 
-  const query = `
-    query ($idMal: Int, $id: Int) {
-      Media(idMal: $idMal, id: $id, type: ANIME) {
+  const queryByMalId = `
+    query ($idMal: Int) {
+      Media(idMal: $idMal, type: ANIME) {
         id
         idMal
         title {
@@ -347,23 +395,194 @@ export async function fetchAniListDetails(id: string | number): Promise<MalAnime
         }
         season
         seasonYear
+        relations {
+          edges {
+            relationType(version: 2)
+            node {
+              id
+              idMal
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                extraLarge
+                large
+                medium
+              }
+              format
+              seasonYear
+              startDate {
+                year
+                month
+                day
+              }
+              meanScore
+              episodes
+              status
+              type
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const queryByAniListId = `
+    query ($id: Int) {
+      Media(id: $id, type: ANIME) {
+        id
+        idMal
+        title {
+          romaji
+          english
+          native
+        }
+        coverImage {
+          extraLarge
+          large
+          medium
+        }
+        bannerImage
+        description(asHtml: false)
+        meanScore
+        averageScore
+        popularity
+        favourites
+        format
+        episodes
+        duration
+        status
+        genres
+        startDate {
+          year
+          month
+          day
+        }
+        endDate {
+          year
+          month
+          day
+        }
+        season
+        seasonYear
+        relations {
+          edges {
+            relationType(version: 2)
+            node {
+              id
+              idMal
+              title {
+                romaji
+                english
+                native
+              }
+              coverImage {
+                extraLarge
+                large
+                medium
+              }
+              format
+              seasonYear
+              startDate {
+                year
+                month
+                day
+              }
+              meanScore
+              episodes
+              status
+              type
+            }
+          }
+        }
       }
     }
   `;
 
   try {
-    const res = await fetch("https://graphql.anilist.co", {
+    let res = await fetch("https://graphql.anilist.co", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({
-        query,
-        variables: { idMal: numId, id: numId },
+        query: queryByMalId,
+        variables: { idMal: numId },
       }),
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const item = json?.data?.Media;
+    let json = await res.json();
+    let item = json?.data?.Media;
+
+    if (!item) {
+      res = await fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          query: queryByAniListId,
+          variables: { id: numId },
+        }),
+      });
+      json = await res.json();
+      item = json?.data?.Media;
+    }
+
     if (!item) return null;
+
+    const relationsRaw = item.relations?.edges || [];
+    const mappedRelations: RelatedAnimeItem[] = relationsRaw
+      .filter((edge: any) => edge?.node && edge?.node?.type !== "MANGA")
+      .map((edge: any) => {
+        const node = edge.node;
+        const relType = edge.relationType || "OTHER";
+
+        let relationLabel = "Related";
+        switch (relType) {
+          case "PREQUEL": relationLabel = "Prequel"; break;
+          case "SEQUEL": relationLabel = "Sequel"; break;
+          case "PARENT": relationLabel = "Main Series"; break;
+          case "SIDE_STORY": relationLabel = "Side Story"; break;
+          case "SPIN_OFF": relationLabel = "Spin-Off"; break;
+          case "ALTERNATIVE": relationLabel = "Alt. Version"; break;
+          case "SUMMARY": relationLabel = "Movie Summary"; break;
+          case "CHARACTER": relationLabel = "Character Story"; break;
+          default: relationLabel = "Related"; break;
+        }
+
+        const releaseTimestamp = (node.startDate?.year || node.seasonYear || 9999) * 10000 +
+          (node.startDate?.month || 1) * 100 +
+          (node.startDate?.day || 1);
+
+        return {
+          id: node.idMal || node.id,
+          title: node.title?.english || node.title?.romaji || node.title?.native || "",
+          subtitle: node.title?.romaji || node.title?.native || "",
+          image: node.coverImage?.large || node.coverImage?.medium || "",
+          score: node.meanScore ? Number((node.meanScore / 10).toFixed(1)) : undefined,
+          type: node.format ? node.format.toLowerCase() : "tv",
+          relationType: relType,
+          relationLabel: relationLabel,
+          year: node.startDate?.year || node.seasonYear,
+          releaseTimestamp,
+        };
+      });
+
+    const relationOrder: Record<string, number> = {
+      PREQUEL: 1,
+      SEQUEL: 2,
+      PARENT: 3,
+      SIDE_STORY: 4,
+      SUMMARY: 5,
+      ALTERNATIVE: 6,
+      SPIN_OFF: 7,
+      OTHER: 8,
+    };
+
+    mappedRelations.sort((a, b) => {
+      if (a.releaseTimestamp && b.releaseTimestamp && a.releaseTimestamp !== b.releaseTimestamp) {
+        return a.releaseTimestamp - b.releaseTimestamp;
+      }
+      return (relationOrder[a.relationType] || 9) - (relationOrder[b.relationType] || 9);
+    });
 
     return {
       id: item.idMal || item.id,
@@ -385,6 +604,7 @@ export async function fetchAniListDetails(id: string | number): Promise<MalAnime
       status: item.status || "",
       average_episode_duration: item.duration ? item.duration * 60 : undefined,
       popularity: item.popularity || undefined,
+      relations: mappedRelations,
     };
   } catch (err) {
     console.error("AniList details error:", err);
@@ -614,7 +834,7 @@ async function fetchJikanDetails(id: string): Promise<MalAnime | null> {
 }
 
 export async function fetchMalDetails(id: string): Promise<MalAnime | null> {
-  const key = `v5_mal_details_${id}`;
+  const key = `v9_mal_details_${id}`;
   return cachedFetch(key, async () => {
     // 1. Primary: AniList GraphQL Details
     const aniListDetails = await fetchAniListDetails(id);
