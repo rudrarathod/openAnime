@@ -1,0 +1,8 @@
+{
+  "name": "openAnime",
+  "description": "Imported from GitHub: rudrarathod/openAnime",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

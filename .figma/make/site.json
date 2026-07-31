@@ -1,0 +1,10 @@
+{
+  "description": "Stream your favorite anime with a premium, responsive interface designed for an immersive viewing experience across all devices.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
