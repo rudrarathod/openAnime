@@ -180,7 +180,7 @@ export default function Watchlist() {
       </div>
 
       {/* Tabs bar */}
-      <div className="flex overflow-x-auto gap-2 pb-2 border-b border-border/40 no-scrollbar touch-pan-x overscroll-x-contain">
+      <div className="flex overflow-x-auto gap-2 pb-2 border-b border-border/40 no-scrollbar touch-auto overscroll-x-auto">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.status;
           const count = tabCounts[tab.status] || 0;

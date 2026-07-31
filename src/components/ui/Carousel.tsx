@@ -67,7 +67,7 @@ export default function Carousel({ title, subtitle, items, layout = "portrait", 
         <div 
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex overflow-x-auto gap-3.5 sm:gap-4 px-4 sm:px-6 md:px-12 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-12 pb-3 sm:pb-4 pt-1 no-scrollbar snap-x snap-mandatory touch-pan-x overscroll-x-contain"
+          className="flex overflow-x-auto gap-3.5 sm:gap-4 px-4 sm:px-6 md:px-12 scroll-pl-4 sm:scroll-pl-6 md:scroll-pl-12 pb-3 sm:pb-4 pt-1 no-scrollbar snap-x snap-proximity touch-auto overscroll-x-auto"
         >
           {items.map((item) => (
             <div 
