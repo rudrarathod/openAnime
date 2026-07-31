@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router";
-import { Play, Share2, Star, Clock, Calendar, Bookmark, Check, ChevronDown, Trash2 } from "lucide-react";
+import { Play, Share2, Star, Clock, Calendar, Bookmark, Check, ChevronDown, Trash2, LayoutGrid, List } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { fetchMalDetails, MalAnime } from "../api/mal";
 import { fetchAnimeEpisodes, JikanEpisode } from "../api/jikan";
@@ -25,6 +25,12 @@ export default function AnimeDetails() {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedChunk, setSelectedChunk] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      return "list";
+    }
+    return "grid";
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { addToWatchlist, removeFromWatchlist, getWatchlistItem, updateWatchlistStatus, syncAiredTotal } = useWatchlist();
@@ -393,6 +399,32 @@ export default function AnimeDetails() {
               <span className="px-2.5 py-0.5 rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
                 {episodes.length} Total
               </span>
+
+              {/* View Mode Toggle Button */}
+              <div className="flex items-center gap-1 p-1 rounded-xl glass border border-white/10 ml-2">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "p-1.5 rounded-lg text-xs font-semibold transition-all touch-manipulation cursor-pointer",
+                    viewMode === "grid" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  title="Grid View"
+                  aria-label="Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "p-1.5 rounded-lg text-xs font-semibold transition-all touch-manipulation cursor-pointer",
+                    viewMode === "list" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  title="List View"
+                  aria-label="List View"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Range Chunk Selector for anime with > 100 episodes */}
@@ -442,120 +474,213 @@ export default function AnimeDetails() {
           {episodesLoading && episodes.length === 0 ? (
             <EpisodeGridSkeleton count={8} />
           ) : episodes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-              {(episodes.length > 100
-                ? episodes.filter((ep) => ep.number >= selectedChunk * 100 + 1 && ep.number <= (selectedChunk + 1) * 100)
-                : episodes
-              ).map((ep) => {
-                const epHasSub = isSubAvailable(subDubInfo, ep.number);
-                const epHasDub = isDubAvailable(subDubInfo, ep.number);
-                const defaultStreamType = epHasSub ? "sub" : "dub";
-                const isWatched = isEpisodeWatched(anime.id, ep.number);
-                const progress = getEpisodeProgress(anime.id, ep.number);
+            viewMode === "list" ? (
+              /* Ultra-Compact Mobile/List View */
+              <div className="flex flex-col gap-2">
+                {(episodes.length > 100
+                  ? episodes.filter((ep) => ep.number >= selectedChunk * 100 + 1 && ep.number <= (selectedChunk + 1) * 100)
+                  : episodes
+                ).map((ep) => {
+                  const epHasSub = isSubAvailable(subDubInfo, ep.number);
+                  const epHasDub = isDubAvailable(subDubInfo, ep.number);
+                  const defaultStreamType = epHasSub ? "sub" : "dub";
+                  const isWatched = isEpisodeWatched(anime.id, ep.number);
 
-                return (
-                  <div
-                    key={ep.id}
-                    className={cn(
-                      "group flex items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl glass border transition-all active:scale-[0.99] touch-manipulation min-w-0 min-h-[52px]",
-                      isWatched
-                        ? "border-primary/30 bg-primary/5 hover:border-primary/50"
-                        : "border-white/5 hover:border-white/20 hover:bg-secondary/40"
-                    )}
-                  >
-                    {/* Left: Thumbnail & Episode Info */}
-                    <Link
-                      to={`/watch/${anime.id}/${ep.number}`}
-                      state={{ streamType: defaultStreamType }}
-                      className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden"
+                  return (
+                    <div
+                      key={ep.id}
+                      className={cn(
+                        "group flex items-center justify-between gap-3 p-2 sm:p-2.5 rounded-xl glass border transition-all active:scale-[0.99] touch-manipulation min-h-[48px]",
+                        isWatched
+                          ? "border-primary/30 bg-primary/5 hover:border-primary/50"
+                          : "border-white/5 hover:border-white/20 hover:bg-secondary/40"
+                      )}
                     >
-                      <div className="relative w-16 sm:w-20 aspect-video rounded-lg overflow-hidden shrink-0 bg-secondary flex items-center justify-center shadow-sm">
-                        <img
-                          src={anime.main_picture?.large || anime.main_picture?.medium}
-                          alt={`EP ${ep.number}`}
+                      <Link
+                        to={`/watch/${anime.id}/${ep.number}`}
+                        state={{ streamType: defaultStreamType }}
+                        className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 overflow-hidden"
+                      >
+                        <span
                           className={cn(
-                            "w-full h-full object-cover blur-[1px] group-hover:scale-105 transition-transform duration-300",
-                            isWatched ? "opacity-75" : "opacity-50"
+                            "w-11 sm:w-12 h-7 sm:h-8 rounded-lg font-display font-extrabold text-xs flex items-center justify-center shrink-0 border shadow-sm transition-colors",
+                            isWatched ? "bg-primary text-white border-primary" : "bg-secondary/80 text-foreground border-border/50 group-hover:bg-primary group-hover:text-white"
                           )}
-                          loading="lazy"
-                        />
-                        <span className="absolute font-display font-extrabold text-white text-[11px] sm:text-xs z-10 drop-shadow">
+                        >
                           EP {ep.number}
                         </span>
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                          <Play className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity fill-current z-10" />
-                        </div>
-
-                        {/* Progress Bar */}
-                        {(isWatched || progress > 0) && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/80 z-10 overflow-hidden">
-                            <div
-                              className="h-full bg-primary transition-all duration-300"
-                              style={{ width: `${progress > 0 ? progress : 100}%` }}
-                            />
+                        <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={cn("text-xs sm:text-sm font-semibold truncate", isWatched ? "text-primary" : "text-foreground")}>
+                              {ep.title}
+                            </span>
+                            {ep.filler && <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase shrink-0">Filler</span>}
+                            {ep.recap && <span className="px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-400 text-[9px] font-extrabold uppercase shrink-0">Recap</span>}
                           </div>
+                        </div>
+                      </Link>
+
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleEpisodeWatched(anime.id, ep.number);
+                          }}
+                          title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+                          className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center transition-all border active:scale-90 touch-manipulation shrink-0 cursor-pointer min-h-[34px] min-w-[34px]",
+                            isWatched
+                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
+                              : "bg-secondary/80 text-muted-foreground border-border/50 hover:text-foreground hover:bg-secondary"
+                          )}
+                        >
+                          <Check className={cn("w-4 h-4", isWatched ? "stroke-[3]" : "opacity-70")} />
+                        </button>
+
+                        {epHasSub && (
+                          <Link
+                            to={`/watch/${anime.id}/${ep.number}`}
+                            state={{ streamType: "sub" }}
+                            title={`Play Episode ${ep.number} SUB`}
+                            className="px-2.5 py-1 rounded-xl bg-secondary/80 hover:bg-primary active:bg-primary active:scale-90 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[32px] min-w-[36px] shrink-0"
+                          >
+                            SUB
+                          </Link>
+                        )}
+                        {epHasDub && (
+                          <Link
+                            to={`/watch/${anime.id}/${ep.number}`}
+                            state={{ streamType: "dub" }}
+                            title={`Play Episode ${ep.number} DUB`}
+                            className="px-2.5 py-1 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-90 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[32px] min-w-[36px] shrink-0"
+                          >
+                            DUB
+                          </Link>
                         )}
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Rich Card Grid View */
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {(episodes.length > 100
+                  ? episodes.filter((ep) => ep.number >= selectedChunk * 100 + 1 && ep.number <= (selectedChunk + 1) * 100)
+                  : episodes
+                ).map((ep) => {
+                  const epHasSub = isSubAvailable(subDubInfo, ep.number);
+                  const epHasDub = isDubAvailable(subDubInfo, ep.number);
+                  const defaultStreamType = epHasSub ? "sub" : "dub";
+                  const isWatched = isEpisodeWatched(anime.id, ep.number);
+                  const progress = getEpisodeProgress(anime.id, ep.number);
 
-                      <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className={cn("text-xs font-bold shrink-0", isWatched ? "text-primary font-bold" : "text-foreground")}>
+                  return (
+                    <div
+                      key={ep.id}
+                      className={cn(
+                        "group flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-2xl glass border transition-all active:scale-[0.98] touch-manipulation min-w-0 min-h-[56px] sm:min-h-[52px]",
+                        isWatched
+                          ? "border-primary/30 bg-primary/5 hover:border-primary/50"
+                          : "border-white/5 hover:border-white/20 hover:bg-secondary/40"
+                      )}
+                    >
+                      {/* Left: Thumbnail & Episode Info */}
+                      <Link
+                        to={`/watch/${anime.id}/${ep.number}`}
+                        state={{ streamType: defaultStreamType }}
+                        className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden active:opacity-80 transition-opacity"
+                      >
+                        <div className="relative w-20 sm:w-24 aspect-video rounded-xl overflow-hidden shrink-0 bg-secondary flex items-center justify-center shadow-md">
+                          <img
+                            src={anime.main_picture?.large || anime.main_picture?.medium}
+                            alt={`EP ${ep.number}`}
+                            className={cn(
+                              "w-full h-full object-cover blur-[1px] group-hover:scale-105 transition-transform duration-300",
+                              isWatched ? "opacity-75" : "opacity-50"
+                            )}
+                            loading="lazy"
+                          />
+                          <span className="absolute font-display font-extrabold text-white text-xs z-10 drop-shadow">
                             EP {ep.number}
                           </span>
-                          {ep.filler && <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase shrink-0">Filler</span>}
-                          {ep.recap && <span className="px-1 py-0.2 rounded bg-purple-500/20 text-purple-400 text-[9px] font-extrabold uppercase shrink-0">Recap</span>}
+                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                            <Play className="w-4 h-4 text-white opacity-80 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity fill-current z-10" />
+                          </div>
+
+                          {/* Progress Bar */}
+                          {(isWatched || progress > 0) && (
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/80 z-10 overflow-hidden">
+                              <div
+                                className="h-full bg-primary transition-all duration-300"
+                                style={{ width: `${progress > 0 ? progress : 100}%` }}
+                              />
+                            </div>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5 group-hover:text-primary transition-colors" title={ep.title}>
-                          {ep.title}
-                        </p>
-                      </div>
-                    </Link>
 
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleEpisodeWatched(anime.id, ep.number);
-                        }}
-                        title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-                        className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all border touch-manipulation shrink-0",
-                          isWatched
-                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
-                            : "bg-secondary/60 text-muted-foreground border-border/40 hover:text-foreground hover:bg-secondary"
+                        <div className="flex flex-col min-w-0 flex-1 overflow-hidden py-0.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={cn("text-xs font-bold shrink-0", isWatched ? "text-primary font-bold" : "text-foreground")}>
+                              EP {ep.number}
+                            </span>
+                            {ep.filler && <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-extrabold uppercase shrink-0">Filler</span>}
+                            {ep.recap && <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-extrabold uppercase shrink-0">Recap</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5 group-hover:text-primary transition-colors leading-normal" title={ep.title}>
+                            {ep.title}
+                          </p>
+                        </div>
+                      </Link>
+
+                      {/* Right: Touch-Friendly Actions */}
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleEpisodeWatched(anime.id, ep.number);
+                          }}
+                          title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+                          className={cn(
+                            "w-9 h-9 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-all border active:scale-90 touch-manipulation shrink-0 cursor-pointer min-h-[36px] min-w-[36px]",
+                            isWatched
+                              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
+                              : "bg-secondary/80 text-muted-foreground border-border/50 hover:text-foreground hover:bg-secondary"
+                          )}
+                        >
+                          <Check className={cn("w-4 h-4", isWatched ? "stroke-[3]" : "opacity-70")} />
+                        </button>
+
+                        {epHasSub && (
+                          <Link
+                            to={`/watch/${anime.id}/${ep.number}`}
+                            state={{ streamType: "sub" }}
+                            title={`Play Episode ${ep.number} SUB`}
+                            className="px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-primary active:bg-primary active:scale-90 text-muted-foreground hover:text-white border border-border/50 text-[11px] font-extrabold uppercase transition-all touch-manipulation flex items-center justify-center min-h-[36px] min-w-[38px] shrink-0"
+                          >
+                            SUB
+                          </Link>
                         )}
-                      >
-                        <Check className={cn("w-3.5 h-3.5", isWatched ? "stroke-[3]" : "opacity-60")} />
-                      </button>
-
-                      {epHasSub && (
-                        <Link
-                          to={`/watch/${anime.id}/${ep.number}`}
-                          state={{ streamType: "sub" }}
-                          title={`Play Episode ${ep.number} SUB`}
-                          className="px-2 py-1 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[28px] shrink-0"
-                        >
-                          SUB
-                        </Link>
-                      )}
-                      {epHasDub && (
-                        <Link
-                          to={`/watch/${anime.id}/${ep.number}`}
-                          state={{ streamType: "dub" }}
-                          title={`Play Episode ${ep.number} DUB`}
-                          className="px-2 py-1 rounded-lg bg-secondary/80 hover:bg-primary active:bg-primary active:scale-95 text-muted-foreground hover:text-white border border-border/50 text-[10px] font-black uppercase transition-all touch-manipulation flex items-center justify-center min-h-[28px] shrink-0"
-                        >
-                          DUB
-                        </Link>
-                      )}
+                        {epHasDub && (
+                          <Link
+                            to={`/watch/${anime.id}/${ep.number}`}
+                            state={{ streamType: "dub" }}
+                            title={`Play Episode ${ep.number} DUB`}
+                            className="px-3 py-1.5 rounded-xl bg-secondary/80 hover:bg-primary active:bg-primary active:scale-90 text-muted-foreground hover:text-white border border-border/50 text-[11px] font-extrabold uppercase transition-all touch-manipulation flex items-center justify-center min-h-[36px] min-w-[38px] shrink-0"
+                          >
+                            DUB
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )
           ) : (
             <div className="text-muted-foreground bg-secondary/30 p-6 rounded-2xl border border-border/40 text-center text-sm font-medium">
               {anime.status === "not_yet_aired"
