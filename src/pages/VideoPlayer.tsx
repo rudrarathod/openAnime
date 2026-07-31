@@ -43,13 +43,6 @@ export default function VideoPlayer() {
 
   useEffect(() => {
     setCountdown(null);
-    if (window.screen && window.screen.orientation && typeof window.screen.orientation.unlock === "function") {
-      try {
-        window.screen.orientation.unlock();
-      } catch (e) {
-        // Safe catch if unlock is unhandled
-      }
-    }
   }, [epId]);
 
   useEffect(() => {
