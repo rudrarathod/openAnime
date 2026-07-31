@@ -149,7 +149,7 @@ export function AnimeDetailsSkeleton() {
       {/* Episode list section */}
       <div className="flex flex-col gap-3 sm:gap-4 mt-2">
         <Skeleton className="h-6 sm:h-7 w-36 sm:w-40" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-secondary/30 border border-border/30 gap-2.5 sm:gap-3">
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
