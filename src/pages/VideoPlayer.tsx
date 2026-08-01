@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation, Link } from "react-router";
-import { ArrowLeft, Play, SkipForward, SkipBack, Sparkles, Check, PictureInPicture2 } from "lucide-react";
+import { ArrowLeft, Play, SkipForward, SkipBack, Sparkles, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchMalDetails, MalAnime } from "../api/mal";
 import { fetchAnimeEpisodes, JikanEpisode } from "../api/jikan";
@@ -8,7 +8,6 @@ import { cn } from "../utils/cn";
 import { EpisodeListSkeleton, Skeleton } from "../components/ui/Skeletons";
 import { useContinueWatching } from "../context/ContinueWatchingContext";
 import { useWatchlist } from "../context/WatchlistContext";
-import { useMiniPlayer } from "../context/MiniPlayerContext";
 import { getFormattedAnimeTitles } from "../utils/title";
 
 export default function VideoPlayer() {
@@ -174,25 +173,9 @@ export default function VideoPlayer() {
 
   const { saveContinueWatching, isEpisodeWatched, getEpisodeProgress } = useContinueWatching();
   const { syncWatchlistProgress } = useWatchlist();
-  const { playStream, minimize } = useMiniPlayer();
 
   const currentEpObj = episodeMap[currentEpNum];
   const currentEpTitle = currentEpObj?.title || `Episode ${currentEpNum}`;
-
-  const handleTriggerMiniPlayer = () => {
-    if (!animeId || !data) return;
-    const formattedTitles = getFormattedAnimeTitles(data);
-    playStream({
-      animeId,
-      epId: currentEpNum,
-      streamType,
-      title: formattedTitles.title,
-      epTitle: currentEpTitle,
-      image: data.main_picture?.large || data.main_picture?.medium || "",
-    });
-    minimize();
-    navigate(-1);
-  };
 
   useEffect(() => {
     if (data && animeId && currentEpNum) {
@@ -526,16 +509,6 @@ export default function VideoPlayer() {
                 <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-extrabold uppercase", autoPlayNext ? "bg-primary text-white" : "bg-secondary/80 text-muted-foreground")}>
                   {autoPlayNext ? "ON" : "OFF"}
                 </span>
-              </button>
-
-              {/* Picture-in-Picture Mini Player Trigger */}
-              <button
-                onClick={handleTriggerMiniPlayer}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-black/30 border border-white/10 text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all min-h-[40px] touch-manipulation active:scale-95 cursor-pointer"
-                title="Pop out Picture-in-Picture Mini Player"
-              >
-                <PictureInPicture2 className="w-4 h-4 text-primary shrink-0" />
-                <span>Mini Player</span>
               </button>
             </div>
 
