@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation, Link } from "react-router";
-import { ArrowLeft, Play, SkipForward, SkipBack, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, Play, SkipForward, SkipBack, Sparkles, Check, PictureInPicture2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchMalDetails, MalAnime } from "../api/mal";
 import { fetchAnimeEpisodes, JikanEpisode } from "../api/jikan";
@@ -8,6 +8,7 @@ import { cn } from "../utils/cn";
 import { EpisodeListSkeleton, Skeleton } from "../components/ui/Skeletons";
 import { useContinueWatching } from "../context/ContinueWatchingContext";
 import { useWatchlist } from "../context/WatchlistContext";
+import { useMiniPlayer } from "../context/MiniPlayerContext";
 import { getFormattedAnimeTitles } from "../utils/title";
 
 export default function VideoPlayer() {
@@ -19,6 +20,7 @@ export default function VideoPlayer() {
   const [subDubInfo, setSubDubInfo] = useState<SubDubAvailability | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [synopsisTab, setSynopsisTab] = useState<"episode" | "series">("episode");
 
   // Auto-play next episode toggle state
   const [autoPlayNext, setAutoPlayNext] = useState<boolean>(() => {
@@ -172,9 +174,25 @@ export default function VideoPlayer() {
 
   const { saveContinueWatching, isEpisodeWatched, getEpisodeProgress } = useContinueWatching();
   const { syncWatchlistProgress } = useWatchlist();
+  const { playStream, minimize } = useMiniPlayer();
 
   const currentEpObj = episodeMap[currentEpNum];
   const currentEpTitle = currentEpObj?.title || `Episode ${currentEpNum}`;
+
+  const handleTriggerMiniPlayer = () => {
+    if (!animeId || !data) return;
+    const formattedTitles = getFormattedAnimeTitles(data);
+    playStream({
+      animeId,
+      epId: currentEpNum,
+      streamType,
+      title: formattedTitles.title,
+      epTitle: currentEpTitle,
+      image: data.main_picture?.large || data.main_picture?.medium || "",
+    });
+    minimize();
+    navigate(-1);
+  };
 
   useEffect(() => {
     if (data && animeId && currentEpNum) {
@@ -429,8 +447,8 @@ export default function VideoPlayer() {
 
         {/* Scrollable Content (Mobile: Details + Episodes, Desktop: Details) */}
         <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
-          {/* Player Container (Sticky top) */}
-          <div className="w-full aspect-video bg-black shrink-0 sticky top-0 z-30 border-b border-border/40 shadow-2xl overflow-hidden">
+          {/* Player Container (Sticky on Mobile/Tablet, Static on Desktop) */}
+          <div className="w-full aspect-video bg-black shrink-0 sticky top-0 lg:static z-30 lg:z-10 border-b border-border/40 shadow-2xl overflow-hidden">
             <iframe 
               key={`${epId}-${streamType}`} // Forces iframe reload when episode or audio type changes
               src={getEmbedUrl()} 
@@ -509,6 +527,16 @@ export default function VideoPlayer() {
                   {autoPlayNext ? "ON" : "OFF"}
                 </span>
               </button>
+
+              {/* Picture-in-Picture Mini Player Trigger */}
+              <button
+                onClick={handleTriggerMiniPlayer}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-black/30 border border-white/10 text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all min-h-[40px] touch-manipulation active:scale-95 cursor-pointer"
+                title="Pop out Picture-in-Picture Mini Player"
+              >
+                <PictureInPicture2 className="w-4 h-4 text-primary shrink-0" />
+                <span>Mini Player</span>
+              </button>
             </div>
 
             {/* Audio Language Switcher */}
@@ -551,7 +579,7 @@ export default function VideoPlayer() {
           </div>
 
           {/* Info Section */}
-          <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-4 max-w-4xl shrink-0">
+          <div className="p-4 md:p-6 lg:p-8 flex flex-col gap-4 w-full shrink-0">
             {loading ? (
               <div className="flex flex-col gap-3">
                 <Skeleton className="h-8 w-1/2" />
@@ -579,18 +607,56 @@ export default function VideoPlayer() {
                     1080p HD
                   </span>
                 </div>
-                <div className="flex flex-col items-start gap-1 mt-4">
-                  <p className={cn("text-foreground/80 leading-relaxed transition-all", !isDescExpanded && "line-clamp-3")}>
-                    {data?.synopsis || "No description available."}
-                  </p>
-                  {data?.synopsis && data.synopsis.length > 120 && (
-                    <button 
-                      onClick={() => setIsDescExpanded(!isDescExpanded)}
-                      className="text-primary font-medium text-sm lg:hover:text-primary/80 transition-colors focus:outline-none"
+                {/* Synopsis Section with Episode vs Series tabs */}
+                <div className="flex flex-col items-start gap-2 mt-4 w-full">
+                  <div className="flex items-center gap-2 border-b border-border/40 pb-2 w-full">
+                    {currentEpObj?.synopsis && (
+                      <button
+                        onClick={() => setSynopsisTab("episode")}
+                        className={cn(
+                          "text-xs font-bold px-3 py-1.5 rounded-lg transition-all border touch-manipulation cursor-pointer",
+                          synopsisTab === "episode"
+                            ? "bg-primary text-white border-primary shadow-sm"
+                            : "bg-secondary/60 text-muted-foreground border-border/40 hover:text-foreground hover:bg-secondary"
+                        )}
+                      >
+                        Episode {currentEpNum} Summary
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSynopsisTab("series")}
+                      className={cn(
+                        "text-xs font-bold px-3 py-1.5 rounded-lg transition-all border touch-manipulation cursor-pointer",
+                        synopsisTab === "series" || !currentEpObj?.synopsis
+                          ? "bg-primary text-white border-primary shadow-sm"
+                          : "bg-secondary/60 text-muted-foreground border-border/40 hover:text-foreground hover:bg-secondary"
+                      )}
                     >
-                      {isDescExpanded ? "Show Less" : "Read More"}
+                      Series Overview
                     </button>
-                  )}
+                  </div>
+
+                  {(() => {
+                    const hasEpSynopsis = !!currentEpObj?.synopsis;
+                    const showEpSynopsis = hasEpSynopsis && synopsisTab === "episode";
+                    const activeText = showEpSynopsis ? currentEpObj.synopsis : (data?.synopsis || "No description available.");
+
+                    return (
+                      <>
+                        <p className={cn("text-foreground/80 leading-relaxed transition-all text-sm sm:text-base", !isDescExpanded && "line-clamp-3")}>
+                          {activeText}
+                        </p>
+                        {activeText && activeText.length > 120 && (
+                          <button
+                            onClick={() => setIsDescExpanded(!isDescExpanded)}
+                            className="text-primary font-semibold text-xs sm:text-sm lg:hover:text-primary/80 transition-colors focus:outline-none cursor-pointer mt-1"
+                          >
+                            {isDescExpanded ? "Show Less" : "Read More"}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </>
             )}

@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
+import MiniPlayer from "../ui/MiniPlayer";
 
 export default function RootLayout() {
   const location = useLocation();
@@ -17,11 +18,16 @@ export default function RootLayout() {
   }, [location.pathname]);
 
   if (isVideoPlayer) {
-    return <Outlet />;
+    return (
+      <>
+        <Outlet />
+        <MiniPlayer />
+      </>
+    );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background relative">
       {/* Desktop & Tablet Sidebar */}
       <Sidebar className="hidden md:flex" />
 
@@ -34,6 +40,9 @@ export default function RootLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating Picture-in-Picture Mini Player */}
+      <MiniPlayer />
 
       {/* Mobile Bottom Navigation */}
       <BottomNav className="md:hidden" />

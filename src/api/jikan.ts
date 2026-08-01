@@ -9,6 +9,7 @@ export interface JikanEpisode {
   recap?: boolean;
   aired?: string | null;
   hasAired?: boolean;
+  synopsis?: string;
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,7 +68,7 @@ export async function fetchAnimeEpisodes(
   malId: string | number,
   onUpdate?: (updatedMap: Record<number, JikanEpisode>) => void
 ): Promise<Record<number, JikanEpisode>> {
-  const key = `jikan_episodes_${malId}`;
+  const key = `jikan_episodes_v2_${malId}`;
   return cachedFetch(key, async () => {
     try {
       const map: Record<number, JikanEpisode> = {};
@@ -91,6 +92,7 @@ export async function fetchAnimeEpisodes(
           recap: ep.recap,
           aired: ep.aired || null,
           hasAired,
+          synopsis: ep.synopsis || undefined,
         };
       };
 
